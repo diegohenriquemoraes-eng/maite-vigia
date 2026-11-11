@@ -1,0 +1,23 @@
+name: vigia
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  vigia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Chamar o vigia
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" -m 290 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" https://maite-wesales.vercel.app/api/vigia)
+          echo "status $code"
+      - name: Manter o agendamento vivo (GitHub desliga após 60 dias sem commit)
+        if: github.event_name == 'schedule'
+        run: |
+          if [ "$(date -u +%d%H%M | cut -c1-5)" = "01120" ]; then
+            git clone -q https://x-access-token:${{ github.token }}@github.com/${{ github.repository }} r && cd r
+            date -u > .vivo && git add .vivo && git -c user.name=vigia -c user.email=vigia@noreply.local commit -qm "mantem vivo" && git push -q
+          fi
