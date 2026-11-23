@@ -8,11 +8,15 @@ permissions:
 jobs:
   vigia:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 11
     steps:
       - name: Chamar o vigia
         run: |
           code=$(curl -s -o /dev/null -w "%{http_code}" -m 290 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" https://maite-wesales.vercel.app/api/vigia)
+          echo "status $code"
+      - name: Reativacao dos perdidos (so age com REATIVAR_ATIVO=1 na Vercel)
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" -m 290 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" https://maite-wesales.vercel.app/api/reativar)
           echo "status $code"
       - name: Manter o agendamento vivo (GitHub desliga após 60 dias sem commit)
         if: github.event_name == 'schedule'
